@@ -1,0 +1,427 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SA Coastal Tracker | Wind & Wave Conditions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@preline/preline@2.0.0/dist/preline.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <base target="_self">
+    <style>
+        .wave-animation {
+            animation: wave 8s ease-in-out infinite;
+        }
+        @keyframes wave {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-6">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="flex items-center mb-4 md:mb-0">
+                        <i class="fas fa-water text-3xl mr-3 wave-animation"></i>
+                        <h1 class="text-2xl font-bold">SA Coastal Tracker</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <select id="location-select" class="bg-blue-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                <option value="capetown">Cape Town</option>
+                                <option value="durban">Durban</option>
+                                <option value="portelizabeth">Port Elizabeth</option>
+                                <option value="eastlondon">East London</option>
+                            </select>
+                        </div>
+                        <button id="theme-toggle" class="p-2 rounded-full bg-blue-700 hover:bg-blue-600 transition">
+                            <i class="fas fa-moon dark:hidden"></i>
+                            <i class="fas fa-sun hidden dark:block"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-8">
+            <!-- Current Conditions -->
+            <section class="mb-12">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Current Conditions</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Wind Card -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transition-all duration-300 card-hover">
+                        <div class="flex items-center mb-4">
+                            <i class="fas fa-wind text-blue-500 text-3xl mr-3"></i>
+                            <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Wind</h3>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-4xl font-bold text-gray-800 dark:text-white" id="wind-speed">12.5</p>
+                                <p class="text-gray-600 dark:text-gray-300">km/h</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-gray-600 dark:text-gray-300">Direction</p>
+                                <p class="text-xl font-semibold text-gray-800 dark:text-white" id="wind-direction">SSW</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Waves Card -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transition-all duration-300 card-hover">
+                        <div class="flex items-center mb-4">
+                            <i class="fas fa-water text-blue-500 text-3xl mr-3"></i>
+                            <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Waves</h3>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-4xl font-bold text-gray-800 dark:text-white" id="wave-height">2.1</p>
+                                <p class="text-gray-600 dark:text-gray-300">meters</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-gray-600 dark:text-gray-300">Period</p>
+                                <p class="text-xl font-semibold text-gray-800 dark:text-white" id="wave-period">8s</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weather Card -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transition-all duration-300 card-hover">
+                        <div class="flex items-center mb-4">
+                            <i class="fas fa-cloud-sun text-blue-500 text-3xl mr-3"></i>
+                            <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Weather</h3>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-4xl font-bold text-gray-800 dark:text-white" id="temperature">22</p>
+                                <p class="text-gray-600 dark:text-gray-300">°C</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-gray-600 dark:text-gray-300">Conditions</p>
+                                <p class="text-xl font-semibold text-gray-800 dark:text-white" id="weather-conditions">Partly Cloudy</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charts Section -->
+            <section class="mb-12">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">24 Hour Forecast</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Wind Speed (km/h)</h3>
+                        <canvas id="windChart" height="250"></canvas>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Wave Height (m)</h3>
+                        <canvas id="waveChart" height="250"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Coastal Spots -->
+            <section>
+                <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Popular Coastal Spots</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
+                        <div class="h-40 bg-blue-500 relative">
+                            <img src="https://images.unsplash.com/photo-1505228395891-1a595f5a0b3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Cape Town" class="w-full h-full object-cover">
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                                <h3 class="text-white font-bold text-lg">Cape Town</h3>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-600 dark:text-gray-300">Wind</span>
+                                <span class="font-semibold text-gray-800 dark:text-white">15 km/h</span>
+                            </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-600 dark:text-gray-300">Waves</span>
+                                <span class="font-semibold text-gray-800 dark:text-white">2.3m @ 9s</span>
+                            </div>
+                            <button class="w-full mt-3 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition">View Details</button>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
+                        <div class="h-40 bg-blue-500 relative">
+                            <img src="https://images.unsplash.com/photo-1520250497590-4509e0b7d9b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Durban" class="w-full h-full object-cover">
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                                <h3 class="text-white font-bold text-lg">Durban</h3>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-600 dark:text-gray-300">Wind</span>
+                                <span class="font-semibold text-gray-800 dark:text-white">10 km/h</span>
+                            </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-600 dark:text-gray-300">Waves</span>
+                                <span class="font-semibold text-gray-800 dark:text-white">1.8m @ 7s</span>
+                            </div>
+                            <button class="w-full mt-3 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition">View Details</button>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
+                        <div class="h-40 bg-blue-500 relative">
+                            <img src="https://images.unsplash.com/photo-1505228395891-1a595f5a0b3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Port Elizabeth" class="w-full h-full object-cover">
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                                <h3 class="text-white font-bold text-lg">Port Elizabeth</h3>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-600 dark:text-gray-300">Wind</span>
+                                <span class="font-semibold text-gray-800 dark:text-white">18 km/h</span>
+                            </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-600 dark:text-gray-300">Waves</span>
+                                <span class="font-semibold text-gray-800 dark:text-white">2.5m @ 10s</span>
+                            </div>
+                            <button class="w-full mt-3 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition">View Details</button>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
+                        <div class="h-40 bg-blue-500 relative">
+                            <img src="https://images.unsplash.com/photo-1505228395891-1a595f5a0b3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="East London" class="w-full h-full object-cover">
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                                <h3 class="text-white font-bold text-lg">East London</h3>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-600 dark:text-gray-300">Wind</span>
+                                <span class="font-semibold text-gray-800 dark:text-white">14 km/h</span>
+                            </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-600 dark:text-gray-300">Waves</span>
+                                <span class="font-semibold text-gray-800 dark:text-white">2.0m @ 8s</span>
+                            </div>
+                            <button class="w-full mt-3 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition">View Details</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white py-8 mt-12">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-4 md:mb-0">
+                        <h2 class="text-xl font-bold flex items-center">
+                            <i class="fas fa-water mr-2"></i> SA Coastal Tracker
+                        </h2>
+                        <p class="text-gray-400 mt-2">Tracking wind and waves along South Africa's beautiful coastline</p>
+                    </div>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-facebook text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-instagram text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400">
+                    <p>&copy; 2023 SA Coastal Tracker. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        });
+
+        // Check for saved theme preference
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+        }
+
+        // Location Selector
+        const locationSelect = document.getElementById('location-select');
+        locationSelect.addEventListener('change', updateWeatherData);
+
+        // Sample data for demo purposes
+        const locations = {
+            capetown: {
+                windSpeed: 12.5,
+                windDirection: 'SSW',
+                waveHeight: 2.1,
+                wavePeriod: 8,
+                temperature: 22,
+                conditions: 'Partly Cloudy'
+            },
+            durban: {
+                windSpeed: 10.2,
+                windDirection: 'NE',
+                waveHeight: 1.8,
+                wavePeriod: 7,
+                temperature: 25,
+                conditions: 'Sunny'
+            },
+            portelizabeth: {
+                windSpeed: 18.3,
+                windDirection: 'SE',
+                waveHeight: 2.5,
+                wavePeriod: 10,
+                temperature: 20,
+                conditions: 'Cloudy'
+            },
+            eastlondon: {
+                windSpeed: 14.0,
+                windDirection: 'E',
+                waveHeight: 2.0,
+                wavePeriod: 8,
+                temperature: 23,
+                conditions: 'Partly Cloudy'
+            }
+        };
+
+        // Update weather data based on selected location
+        function updateWeatherData() {
+            const location = locationSelect.value;
+            const data = locations[location];
+            
+            document.getElementById('wind-speed').textContent = data.windSpeed;
+            document.getElementById('wind-direction').textContent = data.windDirection;
+            document.getElementById('wave-height').textContent = data.waveHeight;
+            document.getElementById('wave-period').textContent = data.wavePeriod + 's';
+            document.getElementById('temperature').textContent = data.temperature;
+            document.getElementById('weather-conditions').textContent = data.conditions;
+            
+            updateCharts(location);
+        }
+
+        // Initialize charts
+        let windChart, waveChart;
+
+        function initCharts() {
+            const windCtx = document.getElementById('windChart').getContext('2d');
+            const waveCtx = document.getElementById('waveChart').getContext('2d');
+            
+            windChart = new Chart(windCtx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: 'Wind Speed (km/h)',
+                        data: [],
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            waveChart = new Chart(waveCtx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: 'Wave Height (m)',
+                        data: [],
+                        borderColor: 'rgb(16, 185, 129)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            updateWeatherData();
+        }
+
+        // Update charts with data for selected location
+        function updateCharts(location) {
+            // Generate random data for demo purposes
+            const baseWind = locations[location].windSpeed;
+            const baseWave = locations[location].waveHeight;
+            
+            const windData = Array.from({length: 24}, (_, i) => {
+                const hour = i;
+                // Simulate daily wind pattern
+                const variation = Math.sin(hour / 24 * Math.PI * 2) * 5;
+                return Math.max(0, baseWind + variation + (Math.random() * 2 - 1));
+            });
+            
+            const waveData = Array.from({length: 24}, (_, i) => {
+                const hour = i;
+                // Simulate daily wave pattern with some randomness
+                const variation = Math.sin(hour / 24 * Math.PI * 2) * 0.5;
+                return Math.max(0.5, baseWave + variation + (Math.random() * 0.3 - 0.15));
+            });
+            
+            windChart.data.datasets[0].data = windData;
+            waveChart.data.datasets[0].data = waveData;
+            windChart.update();
+            waveChart.update();
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            
+            // Simulate real-time updates every 5 minutes
+            setInterval(() => {
+                updateWeatherData();
+            }, 300000);
+        });
+
+        // Prevent default anchor behavior
+        document.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                // In a real app, you would handle navigation here
+                console.log('Navigation prevented:', link.href);
+            });
+        });
+    </script>
+</body>
+</html>
